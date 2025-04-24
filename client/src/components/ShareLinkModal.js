@@ -39,6 +39,21 @@ const ShareLinkModal = ({ fileInfo, onClose }) => {
 
   // Create a direct download option with tracking
   const handleDirectDownload = async () => {
+    // Create downloading notification
+    const downloadingNotification = document.createElement("div");
+    downloadingNotification.className = "download-notification";
+    downloadingNotification.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Downloading ${fileInfo.fileName}...`;
+    downloadingNotification.style.position = "fixed";
+    downloadingNotification.style.bottom = "20px";
+    downloadingNotification.style.right = "20px";
+    downloadingNotification.style.backgroundColor = "#3498db";
+    downloadingNotification.style.color = "white";
+    downloadingNotification.style.padding = "12px 20px";
+    downloadingNotification.style.borderRadius = "4px";
+    downloadingNotification.style.boxShadow = "0 2px 10px rgba(0,0,0,0.2)";
+    downloadingNotification.style.zIndex = "1000";
+    document.body.appendChild(downloadingNotification);
+    
     try {
       // For IPFS gateway URLs, ensure we're using the right format
       const downloadUrl = fileInfo.url.startsWith('ipfs://') 
@@ -47,6 +62,11 @@ const ShareLinkModal = ({ fileInfo, onClose }) => {
       
       // Use fetch API to get the file as a blob which forces "Save As" dialog
       const response = await fetch(downloadUrl);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch file: ${response.status} ${response.statusText}`);
+      }
+      
       const blob = await response.blob();
       
       // Create a blob URL for the file
@@ -68,7 +88,66 @@ const ShareLinkModal = ({ fileInfo, onClose }) => {
         document.body.removeChild(link);
       }, 200);
       
-      // If contract info is available via window, record the download with details
+      // Remove downloading notification
+      document.body.removeChild(downloadingNotification);
+      
+      // Show success notification
+      const successNotification = document.createElement("div");
+      successNotification.className = "download-notification";
+      successNotification.innerHTML = `<i class="fas fa-check-circle"></i> ${fileInfo.fileName} downloaded`;
+      successNotification.style.position = "fixed";
+      successNotification.style.bottom = "20px";
+      successNotification.style.right = "20px";
+      successNotification.style.backgroundColor = "#4CAF50";
+      successNotification.style.color = "white";
+      successNotification.style.padding = "12px 20px";
+      successNotification.style.borderRadius = "4px";
+      successNotification.style.boxShadow = "0 2px 10px rgba(0,0,0,0.2)";
+      successNotification.style.transition = "opacity 0.5s ease";
+      successNotification.style.zIndex = "1000";
+      document.body.appendChild(successNotification);
+      setTimeout(() => {
+        successNotification.style.opacity = "0";
+        setTimeout(() => {
+          document.body.removeChild(successNotification);
+        }, 500);
+      }, 2000);
+      
+      // Record download separately to avoid blocking the UI
+      recordSharedDownload();
+      
+    } catch (error) {
+      console.error("Direct download failed:", error);
+      
+      // Remove downloading notification
+      if (document.body.contains(downloadingNotification)) {
+        document.body.removeChild(downloadingNotification);
+      }
+      
+      // Show error notification
+      const errorNotification = document.createElement("div");
+      errorNotification.className = "download-notification";
+      errorNotification.innerHTML = `<i class="fas fa-exclamation-circle"></i> Download failed`;
+      errorNotification.style.position = "fixed";
+      errorNotification.style.bottom = "20px";
+      errorNotification.style.right = "20px";
+      errorNotification.style.backgroundColor = "#e74c3c";
+      errorNotification.style.color = "white";
+      errorNotification.style.padding = "12px 20px";
+      errorNotification.style.borderRadius = "4px";
+      errorNotification.style.boxShadow = "0 2px 10px rgba(0,0,0,0.2)";
+      errorNotification.style.zIndex = "1000";
+      document.body.appendChild(errorNotification);
+      setTimeout(() => {
+        document.body.removeChild(errorNotification);
+      }, 3000);
+    }
+  };
+  
+  // Separate function to record shared download
+  const recordSharedDownload = async () => {
+    try {
+      // If contract info is available via window, record the download
       const globalWindow = window;
       if (globalWindow.SafeChainApp && 
           globalWindow.SafeChainApp.contract && 
@@ -83,32 +162,11 @@ const ShareLinkModal = ({ fileInfo, onClose }) => {
           `Downloaded via shared link at ${now.toLocaleTimeString()}`
         );
         
-        // Display success notification
-        const notification = document.createElement("div");
-        notification.className = "download-notification";
-        notification.innerHTML = `<i class="fas fa-check-circle"></i> ${fileInfo.fileName} downloaded`;
-        notification.style.position = "fixed";
-        notification.style.bottom = "20px";
-        notification.style.right = "20px";
-        notification.style.backgroundColor = "#4CAF50";
-        notification.style.color = "white";
-        notification.style.padding = "12px 20px";
-        notification.style.borderRadius = "4px";
-        notification.style.boxShadow = "0 2px 10px rgba(0,0,0,0.2)";
-        notification.style.transition = "opacity 0.5s ease";
-        notification.style.zIndex = "1000";
-        document.body.appendChild(notification);
-        setTimeout(() => {
-          notification.style.opacity = "0";
-          setTimeout(() => {
-            document.body.removeChild(notification);
-          }, 500);
-        }, 2000);
+        console.log("Shared download recorded successfully");
       }
-      
     } catch (error) {
-      console.error("Direct download failed:", error);
-      alert("Failed to download file. Please try again.");
+      console.error("Failed to record shared download:", error);
+      // Don't alert the user - the download itself was successful
     }
   };
 

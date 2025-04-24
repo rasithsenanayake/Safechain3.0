@@ -88,9 +88,29 @@ const Display = ({ contract, account }) => {
         ? url.replace('ipfs://', 'https://gateway.pinata.cloud/ipfs/') 
         : url;
       
+      // First show downloading notification
+      const downloadingNotification = document.createElement("div");
+      downloadingNotification.className = "download-notification";
+      downloadingNotification.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Downloading ${filename}...`;
+      downloadingNotification.style.position = "fixed";
+      downloadingNotification.style.bottom = "20px";
+      downloadingNotification.style.right = "20px";
+      downloadingNotification.style.backgroundColor = "#3498db";
+      downloadingNotification.style.color = "white";
+      downloadingNotification.style.padding = "12px 20px";
+      downloadingNotification.style.borderRadius = "4px";
+      downloadingNotification.style.boxShadow = "0 2px 10px rgba(0,0,0,0.2)";
+      downloadingNotification.style.zIndex = "1000";
+      document.body.appendChild(downloadingNotification);
+      
       // Use fetch API to get the file as a blob which forces "Save As" dialog
       fetch(downloadUrl)
-        .then(response => response.blob())
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Failed to fetch file: ${response.status} ${response.statusText}`);
+          }
+          return response.blob();
+        })
         .then(blob => {
           // Create a blob URL for the file
           const blobUrl = URL.createObjectURL(blob);
@@ -111,21 +131,84 @@ const Display = ({ contract, account }) => {
             document.body.removeChild(link);
           }, 200);
           
-          // Record the download in the blockchain
-          console.log("Recording download action for file index:", fileIndex);
+          // Remove downloading notification
+          document.body.removeChild(downloadingNotification);
           
-          // Use direct contract call for immediate result rather than service
-          return contract.recordFileAccess(account, fileIndex, "downloaded", `Downloaded ${filename}`);
+          // Show success notification
+          const successNotification = document.createElement("div");
+          successNotification.className = "download-notification";
+          successNotification.innerHTML = `<i class="fas fa-check-circle"></i> ${filename} downloaded`;
+          successNotification.style.position = "fixed";
+          successNotification.style.bottom = "20px";
+          successNotification.style.right = "20px";
+          successNotification.style.backgroundColor = "#4CAF50";
+          successNotification.style.color = "white";
+          successNotification.style.padding = "12px 20px";
+          successNotification.style.borderRadius = "4px";
+          successNotification.style.boxShadow = "0 2px 10px rgba(0,0,0,0.2)";
+          successNotification.style.transition = "opacity 0.5s ease";
+          successNotification.style.zIndex = "1000";
+          document.body.appendChild(successNotification);
+          setTimeout(() => {
+            successNotification.style.opacity = "0";
+            setTimeout(() => {
+              document.body.removeChild(successNotification);
+            }, 500);
+          }, 2000);
+          
+          // Record download separately from file download to avoid blocking the download
+          recordDownload(fileIndex, filename);
+          
+          return true;
         })
-        .then(tx => {
-          // Wait for transaction to be mined
-          console.log("Waiting for transaction confirmation...");
-          return tx.wait();
-        })
+        .catch(err => {
+          console.error("Download failed:", err);
+          
+          // Remove downloading notification
+          if (document.body.contains(downloadingNotification)) {
+            document.body.removeChild(downloadingNotification);
+          }
+          
+          // Show error notification
+          const errorNotification = document.createElement("div");
+          errorNotification.className = "download-notification";
+          errorNotification.innerHTML = `<i class="fas fa-exclamation-circle"></i> Download failed`;
+          errorNotification.style.position = "fixed";
+          errorNotification.style.bottom = "20px";
+          errorNotification.style.right = "20px";
+          errorNotification.style.backgroundColor = "#e74c3c";
+          errorNotification.style.color = "white";
+          errorNotification.style.padding = "12px 20px";
+          errorNotification.style.borderRadius = "4px";
+          errorNotification.style.boxShadow = "0 2px 10px rgba(0,0,0,0.2)";
+          errorNotification.style.zIndex = "1000";
+          document.body.appendChild(errorNotification);
+          setTimeout(() => {
+            document.body.removeChild(errorNotification);
+          }, 3000);
+        });
+    } catch (error) {
+      console.error("Download initiation failed:", error);
+      alert("Failed to initiate download. Please try again.");
+    }
+  };
+
+  // Separate function to record download in blockchain to avoid blocking the download
+  const recordDownload = async (fileIndex, filename) => {
+    try {
+      console.log("Recording download action for file index:", fileIndex);
+      
+      // Try to record the download, but don't block the actual download
+      const tx = await contract.recordFileAccess(account, fileIndex, "downloaded", `Downloaded ${filename}`);
+      
+      console.log("Download record transaction submitted:", tx.hash);
+      
+      // Wait for transaction to be mined without blocking the UI
+      tx.wait()
         .then(() => {
           console.log("Download recorded successfully in blockchain");
           
-          // Show history after download completed
+          // Show history after download recording completed
           if (showHistoryIndex === fileIndex) {
             // Refresh history if already showing
             getFileHistory(fileIndex);
@@ -134,36 +217,14 @@ const Display = ({ contract, account }) => {
             setShowHistoryIndex(fileIndex);
             getFileHistory(fileIndex);
           }
-          
-          // Show temporary download notification
-          const notification = document.createElement("div");
-          notification.className = "download-notification";
-          notification.innerHTML = `<i class="fas fa-check-circle"></i> ${filename} downloaded`;
-          notification.style.position = "fixed";
-          notification.style.bottom = "20px";
-          notification.style.right = "20px";
-          notification.style.backgroundColor = "#4CAF50";
-          notification.style.color = "white";
-          notification.style.padding = "12px 20px";
-          notification.style.borderRadius = "4px";
-          notification.style.boxShadow = "0 2px 10px rgba(0,0,0,0.2)";
-          notification.style.transition = "opacity 0.5s ease";
-          notification.style.zIndex = "1000";
-          document.body.appendChild(notification);
-          setTimeout(() => {
-            notification.style.opacity = "0";
-            setTimeout(() => {
-              document.body.removeChild(notification);
-            }, 500);
-          }, 2000);
         })
         .catch(err => {
-          console.error("Download or recording failed:", err);
-          alert("Failed to download file or record the download. Please try again.");
+          console.error("Transaction failed:", err);
+          // Don't alert the user as the download itself was successful
         });
     } catch (error) {
-      console.error("Download failed:", error);
-      alert("Failed to download file. Please try again.");
+      console.error("Failed to record download:", error);
+      // Don't alert the user as the download itself was successful
     }
   };
 

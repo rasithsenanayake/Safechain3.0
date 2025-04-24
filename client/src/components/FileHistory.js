@@ -4,7 +4,9 @@ import './FileHistory.css';
 const FileHistory = ({ history, loading, fileName }) => {
   // Get icon for action type
   const getActionIcon = (action) => {
-    switch(action.toLowerCase()) {
+    const actionType = String(action || '').toLowerCase();
+    
+    switch(actionType) {
       case 'upload':
         return 'fas fa-upload';
       case 'delete':
@@ -15,6 +17,8 @@ const FileHistory = ({ history, loading, fileName }) => {
         return 'fas fa-user-slash';
       case 'downloaded':
         return 'fas fa-download';
+      case 'download':
+        return 'fas fa-download'; // Handle both forms
       case 'shared_download':
         return 'fas fa-external-link-alt';
       case 'shared_file_accessed':
@@ -24,13 +28,16 @@ const FileHistory = ({ history, loading, fileName }) => {
       case 'info':
         return 'fas fa-info-circle';
       default:
+        console.log('Unknown action type:', actionType);
         return 'fas fa-history';
     }
   };
 
   // Get class for action type
   const getActionClass = (action) => {
-    switch(action.toLowerCase()) {
+    const actionType = String(action || '').toLowerCase();
+    
+    switch(actionType) {
       case 'upload':
         return 'upload-action';
       case 'delete':
@@ -40,6 +47,7 @@ const FileHistory = ({ history, loading, fileName }) => {
       case 'unshare':
         return 'unshare-action';
       case 'downloaded':
+      case 'download':  // Handle both forms
         return 'download-action';
       case 'shared_download':
         return 'shared-download-action';
@@ -56,8 +64,11 @@ const FileHistory = ({ history, loading, fileName }) => {
 
   // Get friendly name for action type
   const getActionName = (action) => {
-    switch(action.toLowerCase()) {
+    const actionType = String(action || '').toLowerCase();
+    
+    switch(actionType) {
       case 'downloaded':
+      case 'download':
         return 'Downloaded';
       case 'shared_download':
         return 'Shared Link Download';
@@ -105,32 +116,37 @@ const FileHistory = ({ history, loading, fileName }) => {
         </div>
       ) : (
         <div className="history-timeline">
-          {history.map((item, index) => (
-            <div 
-              key={index} 
-              className={`history-item ${getActionClass(item.action)}`}
-            >
-              <div className="history-icon">
-                <i className={getActionIcon(item.action)}></i>
+          {history.map((item, index) => {
+            // Debug logging to verify what data we have
+            console.log(`History item ${index}:`, item);
+            
+            return (
+              <div 
+                key={index} 
+                className={`history-item ${getActionClass(item.action)}`}
+              >
+                <div className="history-icon">
+                  <i className={getActionIcon(item.action)}></i>
+                </div>
+                <div className="history-content">
+                  <div className="history-action">
+                    {getActionName(item.action)}
+                  </div>
+                  <div className="history-details">
+                    {item.details || "No additional details"}
+                  </div>
+                  <div className="history-meta">
+                    <span className="history-time">
+                      <i className="far fa-clock"></i> {formatDate(item.timestamp)}
+                    </span>
+                    <span className="history-user">
+                      <i className="far fa-user"></i> {formatAddress(item.actionBy)}
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div className="history-content">
-                <div className="history-action">
-                  {getActionName(item.action)}
-                </div>
-                <div className="history-details">
-                  {item.details}
-                </div>
-                <div className="history-meta">
-                  <span className="history-time">
-                    <i className="far fa-clock"></i> {formatDate(item.timestamp)}
-                  </span>
-                  <span className="history-user">
-                    <i className="far fa-user"></i> {formatAddress(item.actionBy)}
-                  </span>
-                </div>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
