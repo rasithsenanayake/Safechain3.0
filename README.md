@@ -7,7 +7,7 @@ This project facilitates decentralized image upload and sharing on the blockchai
 
 - **Decentralized Storage:** Images are uploaded to IPFS, ensuring decentralized and immutable storage.
 - **Smart Contract:** Utilizes Solidity smart contracts on the Ethereum blockchain for access control and ownership management.
-- **Access Control:** Users can grant or revoke access to their uploaded images to specific individuals through the smart contract.
+- **File History:** Users can track the files behaviour even thought the content and the file name is changed.
 
 ## Technologies Used
 
@@ -33,4 +33,3 @@ Once the setup and configuration are complete, follow these steps to utilize the
    - Use the "Get Data" button to access other users' images. Input the user's address in the designated box, but remember, you can only access their images if they've granted you access through the smart contract. Otherwise, it will throw an error saying "You don't have access".
 
 These steps will ensure smooth navigation and utilization of the system while maintaining access control and avoiding potential errors.
-
