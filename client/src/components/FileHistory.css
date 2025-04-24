@@ -75,12 +75,14 @@
 }
 
 .history-action {
+  text-align: left;
   font-weight: 600;
   margin-bottom: 5px;
   color: #495057;
 }
 
 .history-details {
+  text-align: left;
   font-size: 0.9rem;
   color: #6c757d;
   margin-bottom: 10px;
@@ -120,6 +122,21 @@
 .unshare-action .history-icon {
   border-color: #f39c12;
   color: #f39c12;
+}
+
+.download-action .history-icon {
+  border-color: #1abc9c;
+  color: #1abc9c;
+}
+
+.shared-download-action .history-icon {
+  border-color: #9b59b6;
+  color: #9b59b6;
+}
+
+.shared-access-action .history-icon {
+  border-color: #3498db;
+  color: #3498db;
 }
 
 .error-action .history-icon {

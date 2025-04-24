@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import FileHistory from "./FileHistory";
 import ShareLinkModal from "./ShareLinkModal";
+import fileTrackingService from "../services/fileTrackingService";
 import "./Display.css";
 
 const Display = ({ contract, account }) => {
@@ -87,33 +88,79 @@ const Display = ({ contract, account }) => {
         ? url.replace('ipfs://', 'https://gateway.pinata.cloud/ipfs/') 
         : url;
       
-      // Create a temporary anchor element
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-      
-      // Set the download attribute with the filename
-      link.setAttribute("download", filename);
-      
-      // Make the link invisible
-      link.style.display = "none";
-      document.body.appendChild(link);
-      
-      // Use setTimeout to ensure the browser has time to process
-      setTimeout(() => {
-        link.click();
-        
-        // Remove the element after a brief delay
-        setTimeout(() => {
-          document.body.removeChild(link);
-        }, 100);
-      }, 0);
-      
-      // Log record of download if contract supports it
-      if (contract && contract.recordFileAccess) {
-        contract.recordFileAccess(account, fileIndex, "downloaded")
-          .catch(err => console.error("Failed to record file access:", err));
-      }
-      
+      // Use fetch API to get the file as a blob which forces "Save As" dialog
+      fetch(downloadUrl)
+        .then(response => response.blob())
+        .then(blob => {
+          // Create a blob URL for the file
+          const blobUrl = URL.createObjectURL(blob);
+          
+          // Create an anchor element and simulate click to download
+          const link = document.createElement("a");
+          link.href = blobUrl;
+          link.download = filename; // This triggers Save As dialog
+          link.style.display = "none";
+          document.body.appendChild(link);
+          
+          // Trigger the download
+          link.click();
+          
+          // Clean up
+          setTimeout(() => {
+            URL.revokeObjectURL(blobUrl);
+            document.body.removeChild(link);
+          }, 200);
+          
+          // Record the download in the blockchain
+          console.log("Recording download action for file index:", fileIndex);
+          
+          // Use direct contract call for immediate result rather than service
+          return contract.recordFileAccess(account, fileIndex, "downloaded", `Downloaded ${filename}`);
+        })
+        .then(tx => {
+          // Wait for transaction to be mined
+          console.log("Waiting for transaction confirmation...");
+          return tx.wait();
+        })
+        .then(() => {
+          console.log("Download recorded successfully in blockchain");
+          
+          // Show history after download completed
+          if (showHistoryIndex === fileIndex) {
+            // Refresh history if already showing
+            getFileHistory(fileIndex);
+          } else {
+            // Show history if not already showing
+            setShowHistoryIndex(fileIndex);
+            getFileHistory(fileIndex);
+          }
+          
+          // Show temporary download notification
+          const notification = document.createElement("div");
+          notification.className = "download-notification";
+          notification.innerHTML = `<i class="fas fa-check-circle"></i> ${filename} downloaded`;
+          notification.style.position = "fixed";
+          notification.style.bottom = "20px";
+          notification.style.right = "20px";
+          notification.style.backgroundColor = "#4CAF50";
+          notification.style.color = "white";
+          notification.style.padding = "12px 20px";
+          notification.style.borderRadius = "4px";
+          notification.style.boxShadow = "0 2px 10px rgba(0,0,0,0.2)";
+          notification.style.transition = "opacity 0.5s ease";
+          notification.style.zIndex = "1000";
+          document.body.appendChild(notification);
+          setTimeout(() => {
+            notification.style.opacity = "0";
+            setTimeout(() => {
+              document.body.removeChild(notification);
+            }, 500);
+          }, 2000);
+        })
+        .catch(err => {
+          console.error("Download or recording failed:", err);
+          alert("Failed to download file or record the download. Please try again.");
+        });
     } catch (error) {
       console.error("Download failed:", error);
       alert("Failed to download file. Please try again.");
@@ -144,26 +191,30 @@ const Display = ({ contract, account }) => {
     
     try {
       setLoadingHistory(true);
+      console.log(`Fetching history for file index: ${fileIndex}`);
       
-      if (contract.getFileHistory) {
-        const history = await contract.getFileHistory(account, fileIndex);
-        console.log("File history:", history);
-        
-        const formattedHistory = history.map(item => ({
-          timestamp: new Date(item.timestamp.toNumber() * 1000),
-          action: item.action,
-          actionBy: item.actionBy,
-          details: item.details
-        }));
-        
+      // Get raw history directly from contract to ensure we have the latest data
+      const history = await contract.getFileHistory(account, fileIndex);
+      console.log("Raw history data:", history);
+      
+      // Format history data
+      const formattedHistory = history.map(item => ({
+        timestamp: new Date(item.timestamp.toNumber() * 1000),
+        action: item.action,
+        actionBy: item.actionBy,
+        details: item.details
+      }));
+      
+      console.log("Formatted history:", formattedHistory);
+      
+      if (formattedHistory.length > 0) {
         setFileHistory(formattedHistory);
       } else {
-        console.log("getFileHistory function not found on contract");
         setFileHistory([{ 
           timestamp: new Date(), 
           action: "info", 
           actionBy: "0x0", 
-          details: "History tracking not available in current contract version" 
+          details: "No history records found for this file" 
         }]);
       }
     } catch (e) {
@@ -239,6 +290,12 @@ const Display = ({ contract, account }) => {
     });
     
     setShareLinkModalOpen(true);
+    
+    // Make SafeChainApp available globally for shared link downloads
+    window.SafeChainApp = {
+      contract,
+      account
+    };
     
     try {
       if (contract.recordShareLink) {
@@ -346,7 +403,15 @@ const Display = ({ contract, account }) => {
                     </button>
                     <button 
                       className="action-button download-btn" 
-                      onClick={() => downloadFile(url, fileName, index)}
+                      onClick={(e) => {
+                        e.preventDefault(); // Prevent default behavior
+                        e.stopPropagation(); // Stop event from propagating
+                        downloadFile(url, fileName, index);
+                        // Optionally show history after download
+                        if (showHistoryIndex !== index) {
+                          setTimeout(() => toggleHistory(index), 500);
+                        }
+                      }}
                       title="Download File"
                     >
                       <i className="fas fa-download"></i> <span>Download</span>

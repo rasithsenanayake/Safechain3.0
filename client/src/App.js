@@ -43,7 +43,7 @@ function App() {
           setAccount(address);
           
           setConnectionStatus("Loading contract");
-          let contractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+          let contractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3"; // Replace with your contract address
 
           const contract = new ethers.Contract(
             contractAddress,

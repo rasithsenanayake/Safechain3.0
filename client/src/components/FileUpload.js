@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import axios from "axios";
+import fileTrackingService from "../services/fileTrackingService";
 import "./FileUpload.css";
 
 const FileUpload = ({ contract, account, provider }) => {
@@ -89,7 +90,23 @@ const FileUpload = ({ contract, account, provider }) => {
       
       // Create URL with filename as query parameter for better identification
       const fileUrl = `https://gateway.pinata.cloud/ipfs/${resFile.data.IpfsHash}?filename=${encodeURIComponent(fileName)}`;
-      await contract.add(account, fileUrl);
+      const tx = await contract.add(account, fileUrl);
+      await tx.wait();
+      
+      // Record this upload in file tracking (as the last index)
+      try {
+        const currentFiles = await contract.display(account);
+        const newFileIndex = currentFiles.length - 1;
+        await fileTrackingService.recordFileAccess(
+          contract, 
+          account, 
+          newFileIndex, 
+          "upload", 
+          `File uploaded: ${fileName}`
+        );
+      } catch (err) {
+        console.error("Failed to record upload in history", err);
+      }
       
       setUploadProgress(100);
       

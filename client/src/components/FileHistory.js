@@ -13,6 +13,12 @@ const FileHistory = ({ history, loading, fileName }) => {
         return 'fas fa-share-alt';
       case 'unshare':
         return 'fas fa-user-slash';
+      case 'downloaded':
+        return 'fas fa-download';
+      case 'shared_download':
+        return 'fas fa-external-link-alt';
+      case 'shared_file_accessed':
+        return 'fas fa-eye';
       case 'error':
         return 'fas fa-exclamation-circle';
       case 'info':
@@ -33,12 +39,32 @@ const FileHistory = ({ history, loading, fileName }) => {
         return 'share-action';
       case 'unshare':
         return 'unshare-action';
+      case 'downloaded':
+        return 'download-action';
+      case 'shared_download':
+        return 'shared-download-action';
+      case 'shared_file_accessed':
+        return 'shared-access-action';
       case 'error':
         return 'error-action';
       case 'info':
         return 'info-action';
       default:
         return '';
+    }
+  };
+
+  // Get friendly name for action type
+  const getActionName = (action) => {
+    switch(action.toLowerCase()) {
+      case 'downloaded':
+        return 'Downloaded';
+      case 'shared_download':
+        return 'Shared Link Download';
+      case 'shared_file_accessed':
+        return 'Viewed via Shared Link';
+      default:
+        return action.charAt(0).toUpperCase() + action.slice(1);
     }
   };
 
@@ -89,7 +115,7 @@ const FileHistory = ({ history, loading, fileName }) => {
               </div>
               <div className="history-content">
                 <div className="history-action">
-                  {item.action.charAt(0).toUpperCase() + item.action.slice(1)}
+                  {getActionName(item.action)}
                 </div>
                 <div className="history-details">
                   {item.details}
