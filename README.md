@@ -26,10 +26,10 @@ Once the setup and configuration are complete, follow these steps to utilize the
 2. **Update Contract Address:**
    - After smart contract deployment, make sure to update the contract address in `App.js` within the React application.
 
-3. **Upload Image before "Get Data":**
-   - Click "Get Data" only after uploading an image on Pinata. Otherwise, it will throw an error stating "You don't have access".
+3. **Npm i for :**
+   - After smart contract deployment, make sure to update the contract address in `App.js` within the React application.
 
-4. **Accessing Other User Images:**
-   - Use the "Get Data" button to access other users' images. Input the user's address in the designated box, but remember, you can only access their images if they've granted you access through the smart contract. Otherwise, it will throw an error saying "You don't have access".
+4. **Update Contract Address:**
+   - After smart contract deployment, make sure to update the contract address in `App.js` within the React application.
 
 These steps will ensure smooth navigation and utilization of the system while maintaining access control and avoiding potential errors.
