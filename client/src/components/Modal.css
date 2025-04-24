@@ -1,0 +1,105 @@
+.modalBackground {
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  position: fixed;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+}
+
+.modalContainer {
+  width: 500px;
+  border-radius: 12px;
+  background-color: white;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  padding: 25px;
+  font-family: 'Poppins', sans-serif;
+}
+
+.title {
+  color: #000000;
+  font-weight: 600;
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.titleCloseBtn {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.titleCloseBtn button {
+  background-color: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #999;
+  transition: color 0.3s ease;
+}
+
+.titleCloseBtn button:hover {
+  color: #000;
+}
+
+.modalContainer .body {
+  margin: 20px 0;
+  color: #000000;
+  font-size: 1rem;
+  text-align: center;
+}
+
+.modalContainer .footer {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.modalContainer .footer button {
+  padding: 10px 20px;
+  margin: 0 10px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: 'Poppins', sans-serif;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: white;
+  background-color: #3498db;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.modalContainer .footer button:hover {
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+#cancelBtn {
+  background-color: #e74c3c;
+}
+
+.address {
+  display: block;
+  margin: 15px auto;
+  height: 40px;
+  width: 100%;
+  max-width: 330px;
+  text-align: center;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-family: 'Poppins', sans-serif;
+  color: #000000;
+}
+
+input[type="text"]:focus {
+  background-color: #f0f8ff;
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
