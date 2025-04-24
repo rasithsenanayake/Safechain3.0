@@ -266,7 +266,10 @@ const Display = ({ contract, account }) => {
         details: item.details
       }));
       
-      console.log("Formatted history:", formattedHistory);
+      // Sort history with newest events at the top
+      formattedHistory.sort((a, b) => b.timestamp - a.timestamp);
+      
+      console.log("Formatted and sorted history:", formattedHistory);
       
       if (formattedHistory.length > 0) {
         setFileHistory(formattedHistory);
