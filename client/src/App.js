@@ -17,9 +17,62 @@ function App() {
   const [connectionStatus, setConnectionStatus] = useState("Connecting");
   const [isSharedFileView, setIsSharedFileView] = useState(false);
   const [sharedFileParams, setSharedFileParams] = useState(null);
+  const [contractError, setContractError] = useState("");
+  const [accountError, setAccountError] = useState("");
 
   useEffect(() => {
     const provider = new ethers.providers.Web3Provider(window.ethereum);
+
+    const loadBlockchainData = async () => {
+      try {
+        setConnectionStatus("Connecting to network");
+        await provider.send("eth_requestAccounts", []);
+        
+        const network = await provider.getNetwork();
+        setNetworkName(network.name === 'unknown' ? 'Local Network' : network.name);
+        
+        const signer = provider.getSigner();
+        const address = await signer.getAddress();
+        
+        // Load the contract with better error handling
+        try {
+          let contractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3"; // Replace with your contract address
+          const contract = new ethers.Contract(
+            contractAddress,
+            Upload.abi,
+            signer
+          );
+          
+          // Test if contract is properly loaded by calling a simple view function
+          try {
+            await contract.provider.getCode(contractAddress);
+            
+            setAccount(address);
+            setContract(contract);
+            setProvider(provider);
+            
+            // Make contract available globally for components that need it
+            window.SafeChainApp = {
+              contract,
+              account: address
+            };
+            setConnectionStatus("Connected");
+          } catch (contractMethodError) {
+            console.error("Error testing contract:", contractMethodError);
+            setContractError("Contract initialization failed. Please check contract address and network connection.");
+          }
+        } catch (contractError) {
+          console.error("Error loading contract:", contractError);
+          setContractError("Failed to load the contract. Please check if the contract is deployed to this network.");
+        }
+      } catch (error) {
+        console.error("Blockchain data load error:", error);
+        setAccountError("Failed to connect to blockchain. Please check your wallet connection.");
+        setConnectionStatus("Connection failed");
+      } finally {
+        setLoading(false);
+      }
+    };
 
     const loadProvider = async () => {
       if (provider) {
@@ -31,37 +84,7 @@ function App() {
           window.location.reload();
         });
         
-        try {
-          setConnectionStatus("Connecting to network");
-          await provider.send("eth_requestAccounts", []);
-          
-          const network = await provider.getNetwork();
-          setNetworkName(network.name === 'unknown' ? 'Local Network' : network.name);
-          
-          const signer = provider.getSigner();
-          const address = await signer.getAddress();
-          setAccount(address);
-          
-          setConnectionStatus("Loading contract");
-          let contractAddress = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"; // Replace with your contract address
-
-          const contract = new ethers.Contract(
-            contractAddress,
-            Upload.abi,
-            signer
-          );
-          
-          console.log("Available contract functions:", Object.keys(contract.functions));
-          
-          setContract(contract);
-          setProvider(provider);
-          setConnectionStatus("Connected");
-        } catch (error) {
-          console.error("Connection error:", error);
-          setConnectionStatus("Connection failed");
-        } finally {
-          setLoading(false);
-        }
+        await loadBlockchainData();
       } else {
         console.error("Metamask is not installed");
         setConnectionStatus("Metamask not installed");
@@ -128,6 +151,8 @@ function App() {
                     <i className="fas fa-exclamation-circle"></i> Not connected
                   </>
                 )}
+                {contractError && <p className="error-message">{contractError}</p>}
+                {accountError && <p className="error-message">{accountError}</p>}
               </div>
             </div>
             

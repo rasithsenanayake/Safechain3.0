@@ -471,10 +471,6 @@ const Display = ({ contract, account }) => {
                         e.preventDefault(); // Prevent default behavior
                         e.stopPropagation(); // Stop event from propagating
                         downloadFile(url, fileName, index);
-                        // Optionally show history after download
-                        if (showHistoryIndex !== index) {
-                          setTimeout(() => toggleHistory(index), 500);
-                        }
                       }}
                       title="Download File"
                     >
