@@ -132,7 +132,7 @@ function App() {
             <div className="page-header">
               <div className="logo-container">
                 <img src="Safechain.png" alt="SafeChain Logo" className="logo" />
-                <h1>SafeChain</h1>
+                <h1>SAFECHAIN</h1>
               </div>
               <p className="app-description">
                 Secure decentralized file storage and sharing powered by blockchain technology
