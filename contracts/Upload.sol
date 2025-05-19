@@ -66,8 +66,8 @@ contract Upload {
     // (if it's not already the last element)
     if (fileIndex < value[_user].length - 1) {
       value[_user][fileIndex] = value[_user][value[_user].length - 1];
-      // Move history as well
-      fileHistory[_user][fileIndex] = fileHistory[_user][value[_user].length - 1];
+      // We shouldn't move the history as it belongs to a different file
+      // Keep the history of the deleted file at its index
     }
     
     // Remove the last element
@@ -140,6 +140,7 @@ contract Upload {
   // Function to record when a file is accessed via shareable link
   function recordFileAccess(address _owner, uint256 fileIndex, address accessedBy, string memory actionType) public {
     require(fileIndex < value[_owner].length, "File index out of bounds");
+    require(_owner == msg.sender || ownership[_owner][msg.sender], "Not authorized to record access");
     
     // Record the access in file history
     FileHistory memory history = FileHistory({
@@ -156,6 +157,7 @@ contract Upload {
   // Function to record when a file is downloaded via shareable link
   function recordFileDownload(address _owner, uint256 fileIndex, address downloadedBy, string memory actionType) public {
     require(fileIndex < value[_owner].length, "File index out of bounds");
+    require(_owner == msg.sender || ownership[_owner][msg.sender], "Not authorized to record download");
     
     // Record the download in file history
     FileHistory memory history = FileHistory({

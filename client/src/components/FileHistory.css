@@ -57,11 +57,11 @@
   height: 22px;
   border-radius: 50%;
   background-color: white;
-  border: 2px solid #6c757d;
+  border: 2px solid #707d6c;
   display: flex;
   justify-content: center;
   align-items: center;
-  color: #6c757d;
+  color: #248cc9;
   font-size: 10px;
   z-index: 1;
 }
@@ -127,7 +127,7 @@
 .download-action .history-icon {
   border-color: #1abc9c;
   color: #1abc9c;
-}
+} 
 
 .shared-download-action .history-icon {
   border-color: #9b59b6;
